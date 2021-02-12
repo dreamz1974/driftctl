@@ -5,6 +5,7 @@ import (
 
 	"github.com/cloudskiff/driftctl/pkg/alerter"
 	"github.com/cloudskiff/driftctl/pkg/analyser"
+	"github.com/cloudskiff/driftctl/pkg/remote"
 	testresource "github.com/cloudskiff/driftctl/test/resource"
 	"github.com/r3labs/diff/v2"
 )
@@ -230,9 +231,81 @@ func fakeAnalysisWithComputedFields() *analyser.Analysis {
 	}})
 	a.SetAlerts(alerter.Alerts{
 		"": []alerter.Alert{
-			{
-				Message: "You have diffs on computed fields, check the documentation for potential false positive drifts",
+			analyser.NewComputedDiffAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"),
+		},
+	})
+	return &a
+}
+
+func fakeAnalysisWithPolicy() *analyser.Analysis {
+	a := analyser.Analysis{}
+	a.AddManaged(
+		&testresource.FakeResource{
+			Id:   "diff-id-1",
+			Type: "aws_diff_resource",
+		},
+	)
+	a.AddDifference(analyser.Difference{Res: testresource.FakeResource{
+		Id:   "diff-id-1",
+		Type: "aws_diff_resource",
+	}, Changelog: []analyser.Change{
+		{
+			Change: diff.Change{
+				Type: diff.UPDATE,
+				Path: []string{"updated", "field"},
+				From: "foobar",
+				To:   "barfoo",
 			},
+			Computed: true,
+		},
+		{
+			Change: diff.Change{
+				Type: diff.CREATE,
+				Path: []string{"new", "field"},
+				From: nil,
+				To:   "newValue",
+			},
+		},
+		{
+			Change: diff.Change{
+				Type: diff.DELETE,
+				Path: []string{"a"},
+				From: "oldValue",
+				To:   nil,
+			},
+			Computed: true,
+		},
+		{
+			Change: diff.Change{
+				Type: diff.UPDATE,
+				From: "foo",
+				To:   "oof",
+				Path: []string{
+					"struct",
+					"0",
+					"array",
+					"0",
+				},
+			},
+			Computed: true,
+		},
+		{
+			Change: diff.Change{
+				Type: diff.UPDATE,
+				From: "one",
+				To:   "two",
+				Path: []string{
+					"struct",
+					"0",
+					"string",
+				},
+			},
+			Computed: true,
+		},
+	}})
+	a.SetAlerts(alerter.Alerts{
+		"": []alerter.Alert{
+			remote.NewEnumerationAccessDeniedAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"),
 		},
 	})
 	return &a
