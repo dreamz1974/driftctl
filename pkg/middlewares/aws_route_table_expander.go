@@ -10,6 +10,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type invalidRouteAlert struct {
+	message string
+}
+
+func newInvalidRouteAlert(message string) invalidRouteAlert {
+	return invalidRouteAlert{message}
+}
+
+func (i invalidRouteAlert) Message() string {
+	return i.message
+}
+
+func (i invalidRouteAlert) ShouldIgnoreResource() bool {
+	return false
+}
+
 // Explodes routes found in aws_default_route_table.route and aws_route_table.route to dedicated resources
 type AwsRouteTableExpander struct {
 	alerter alerter.AlerterInterface
@@ -60,9 +76,9 @@ func (m *AwsRouteTableExpander) handleTable(table *aws.AwsRouteTable, results *[
 	for _, route := range *table.Route {
 		routeId, err := aws.CalculateRouteID(&table.Id, route.CidrBlock, route.Ipv6CidrBlock)
 		if err != nil {
-			m.alerter.SendAlert(aws.AwsRouteTableResourceType, alerter.Alert{
-				Message: fmt.Sprintf("Skipped invalid route found in state for %s.%s", aws.AwsRouteTableResourceType, table.Id),
-			})
+			m.alerter.SendAlert(aws.AwsRouteTableResourceType, newInvalidRouteAlert(
+				fmt.Sprintf("Skipped invalid route found in state for %s.%s", aws.AwsRouteTableResourceType, table.Id),
+			))
 			continue
 		}
 		newRouteFromTable := &aws.AwsRoute{
@@ -107,9 +123,9 @@ func (m *AwsRouteTableExpander) handleDefaultTable(table *aws.AwsDefaultRouteTab
 	for _, route := range *table.Route {
 		routeId, err := aws.CalculateRouteID(&table.Id, route.CidrBlock, route.Ipv6CidrBlock)
 		if err != nil {
-			m.alerter.SendAlert(aws.AwsDefaultRouteTableResourceType, alerter.Alert{
-				Message: fmt.Sprintf("Skipped invalid route found in state for %s.%s", aws.AwsDefaultRouteTableResourceType, table.Id),
-			})
+			m.alerter.SendAlert(aws.AwsDefaultRouteTableResourceType, newInvalidRouteAlert(
+				fmt.Sprintf("Skipped invalid route found in state for %s.%s", aws.AwsDefaultRouteTableResourceType, table.Id),
+			))
 			continue
 		}
 		newRouteFromTable := &aws.AwsRoute{
