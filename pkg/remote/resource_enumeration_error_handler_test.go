@@ -25,7 +25,7 @@ func TestHandleListAwsError(t *testing.T) {
 		{
 			name:       "Handled error",
 			err:        remoteerror.NewResourceEnumerationError(awserr.NewRequestFailure(nil, 403, ""), resourceaws.AwsVpcResourceType),
-			wantAlerts: alerter.Alerts{"aws_vpc": []alerter.Alert{alerter.Alert{Message: "Ignoring aws_vpc from drift calculation: Listing aws_vpc is forbidden.", ShouldIgnoreResource: true}}},
+			wantAlerts: alerter.Alerts{"aws_vpc": []alerter.Alert{NewEnumerationAccessDeniedAlert("Ignoring aws_vpc from drift calculation: Listing aws_vpc is forbidden.")}},
 			wantErr:    false,
 		},
 		{
