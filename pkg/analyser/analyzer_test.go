@@ -21,6 +21,23 @@ import (
 	"testing"
 )
 
+type fakeAlert struct {
+	message              string
+	shouldIgnoreResource bool
+}
+
+func newFakeAlert(message string, shouldIgnoreResource bool) fakeAlert {
+	return fakeAlert{message, shouldIgnoreResource}
+}
+
+func (f fakeAlert) Message() string {
+	return f.message
+}
+
+func (f fakeAlert) ShouldIgnoreResource() bool {
+	return f.shouldIgnoreResource
+}
+
 func TestAnalyze(t *testing.T) {
 	cases := []struct {
 		name         string
@@ -271,9 +288,7 @@ func TestAnalyze(t *testing.T) {
 				},
 				alerts: alerter.Alerts{
 					"": {
-						{
-							Message: "You have diffs on computed fields, check the documentation for potential false positive drifts",
-						},
+						NewComputedDiffAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"),
 					},
 				},
 			},
@@ -350,9 +365,7 @@ func TestAnalyze(t *testing.T) {
 				},
 				alerts: alerter.Alerts{
 					"": {
-						{
-							Message: "You have diffs on computed fields, check the documentation for potential false positive drifts",
-						},
+						NewComputedDiffAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"),
 					},
 				},
 			},
@@ -519,21 +532,13 @@ func TestAnalyze(t *testing.T) {
 			},
 			alerts: alerter.Alerts{
 				"fakeres": {
-					{
-						Message:              "Should be ignored",
-						ShouldIgnoreResource: true,
-					},
+					newFakeAlert("Should be ignored", true),
 				},
 				"other.foobaz": {
-					{
-						Message:              "Should be ignored",
-						ShouldIgnoreResource: true,
-					},
+					newFakeAlert("Should be ignored", true),
 				},
 				"other.resource": {
-					{
-						Message: "Should not be ignored",
-					},
+					newFakeAlert("Should not be ignored", false),
 				},
 			},
 			expected: Analysis{
@@ -655,26 +660,16 @@ func TestAnalyze(t *testing.T) {
 				},
 				alerts: alerter.Alerts{
 					"fakeres": {
-						{
-							Message:              "Should be ignored",
-							ShouldIgnoreResource: true,
-						},
+						newFakeAlert("Should be ignored", true),
 					},
 					"other.foobaz": {
-						{
-							Message:              "Should be ignored",
-							ShouldIgnoreResource: true,
-						},
+						newFakeAlert("Should be ignored", true),
 					},
 					"other.resource": {
-						{
-							Message: "Should not be ignored",
-						},
+						newFakeAlert("Should not be ignored", false),
 					},
 					"": {
-						{
-							Message: "You have diffs on computed fields, check the documentation for potential false positive drifts",
-						},
+						NewComputedDiffAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"),
 					},
 				},
 			},
@@ -874,9 +869,7 @@ func TestAnalyze(t *testing.T) {
 				},
 				alerts: alerter.Alerts{
 					"": {
-						{
-							Message: "You have diffs on computed fields, check the documentation for potential false positive drifts",
-						},
+						NewComputedDiffAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"),
 					},
 				},
 			},
@@ -1027,9 +1020,7 @@ func TestAnalysis_MarshalJSON(t *testing.T) {
 	})
 	analysis.SetAlerts(alerter.Alerts{
 		"aws_iam_access_key": {
-			{
-				Message: "This is an alert",
-			},
+			newFakeAlert("This is an alert", false),
 		},
 	})
 
@@ -1109,8 +1100,8 @@ func TestAnalysis_UnmarshalJSON(t *testing.T) {
 		},
 		alerts: alerter.Alerts{
 			"aws_iam_access_key": {
-				{
-					Message: "This is an alert",
+				alerter.SerializedAlert{
+					Msg: "This is an alert",
 				},
 			},
 		},

@@ -9,6 +9,22 @@ import (
 	"github.com/r3labs/diff/v2"
 )
 
+type ComputedDiffAlert struct {
+	message string
+}
+
+func NewComputedDiffAlert(message string) ComputedDiffAlert {
+	return ComputedDiffAlert{message}
+}
+
+func (c ComputedDiffAlert) Message() string {
+	return c.message
+}
+
+func (c ComputedDiffAlert) ShouldIgnoreResource() bool {
+	return false
+}
+
 type Analyzer struct {
 	alerter *alerter.Alerter
 }
@@ -79,9 +95,7 @@ func (a Analyzer) Analyze(remoteResources, resourcesFromState []resource.Resourc
 
 	if haveComputedDiff {
 		a.alerter.SendAlert("",
-			alerter.Alert{
-				Message: "You have diffs on computed fields, check the documentation for potential false positive drifts",
-			})
+			NewComputedDiffAlert("You have diffs on computed fields, check the documentation for potential false positive drifts"))
 	}
 
 	// Add remaining unmanaged resources
