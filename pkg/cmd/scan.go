@@ -9,7 +9,7 @@ import (
 	"syscall"
 
 	"github.com/cloudskiff/driftctl/pkg"
-	"github.com/cloudskiff/driftctl/pkg/alerter"
+	pkgalerter "github.com/cloudskiff/driftctl/pkg/alerter"
 	cmderrors "github.com/cloudskiff/driftctl/pkg/cmd/errors"
 	"github.com/cloudskiff/driftctl/pkg/cmd/scan/output"
 	"github.com/cloudskiff/driftctl/pkg/filter"
@@ -125,7 +125,7 @@ func scanRun(opts *ScanOptions) error {
 	c := make(chan os.Signal)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
-	alerter := alerter.NewAlerter()
+	alerter := pkgalerter.NewAlerter()
 	providerLibrary := terraform.NewProviderLibrary()
 	supplierLibrary := resource.NewSupplierLibrary()
 
